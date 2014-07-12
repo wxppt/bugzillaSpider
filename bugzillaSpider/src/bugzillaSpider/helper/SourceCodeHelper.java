@@ -1,44 +1,84 @@
 package bugzillaSpider.helper;
+
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.net.ssl.HttpsURLConnection;
+
+import bugzillaSpider.PO.Category;
+import bugzillaSpider.constant.Const;
 
 public class SourceCodeHelper {
-	private final String DEFAULT_CHARSET = "utf-8";
+
+	public static final String DEFAULT_CHARSET = "utf-8";
+	private String urlStr = null;
 	private URL url = null;
-	private HttpURLConnection urlConnection = null;
-	private Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("117.59.217.245", 80));
+	private Proxy proxy = null;
+	private HttpURLConnection conn = null;
 
-	public SourceCodeHelper(String u) throws IOException {
-		url = new URL(u);
+	public SourceCodeHelper(String urlStr, Proxy proxy) throws IOException {
+		this.urlStr = urlStr;
+		url = new URL(urlStr);
+		this.proxy = proxy;
 	}
 
-	public URL getUrl() {
-		return url;
+	public SourceCodeHelper(String urlStr) throws IOException {
+		this.urlStr = urlStr;
+		url = new URL(urlStr);
 	}
 
-	public void setUrl(URL url) throws IOException {
-		this.url = url;
-		urlConnection = (HttpURLConnection) url.openConnection(proxy);
+	public void setProxy(Proxy proxy) {
+		this.proxy = proxy;
 	}
 
-	public String getSourceCode() {
-		String charset = getCharset();
-		return readSourceCodeWithCharset(charset);
+	private void openConnection() throws IOException {
+		if (urlStr.toLowerCase().startsWith("https")) {
+			if (proxy == null) {
+				conn = (HttpsURLConnection) url.openConnection();
+			} else {
+				conn = (HttpsURLConnection) url.openConnection(proxy);
+			}
+		} else {
+			if (proxy == null) {
+				conn = (HttpURLConnection) url.openConnection();
+			} else {
+				conn = (HttpURLConnection) url.openConnection(proxy);
+			}
+		}
+	}
+
+	public boolean testConnection() {
+		if (conn != null) {
+			try {
+				conn.connect();
+				return true;
+			} catch (IOException e) {
+			}
+		}
+		return false;
+	}
+
+	private void closeConnection() {
+		if (conn != null) {
+			conn.disconnect();
+		}
 	}
 
 	public String getCharset() {
 		String charsetLine = null;
 		BufferedReader bfr = null;
 		try {
-			urlConnection = (HttpURLConnection) url.openConnection();
+			openConnection();
 			bfr = new BufferedReader(new InputStreamReader(
-					urlConnection.getInputStream(), DEFAULT_CHARSET));
+					conn.getInputStream(), DEFAULT_CHARSET));
 			String line;
 			while ((line = bfr.readLine()) != null) {
 				if (line.toLowerCase().contains("charset")) {
@@ -47,6 +87,7 @@ public class SourceCodeHelper {
 				}
 			}
 			bfr.close();
+			closeConnection();
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -57,22 +98,27 @@ public class SourceCodeHelper {
 			} catch (Exception e) {
 			}
 		}
-		String charset = getCharset(charsetLine);
+		String charset = filterCharset(charsetLine);
 		return charset;
 	}
 
-	private String readSourceCodeWithCharset(String charset) {
+	public String getSourceCode() {
+		return getSourceCode(getCharset());
+	}
+
+	public String getSourceCode(String charset) {
 		BufferedReader bfr = null;
 		String source = null;
 		try {
-			urlConnection = (HttpURLConnection) url.openConnection(proxy);
+			openConnection();
 			bfr = new BufferedReader(new InputStreamReader(
-					urlConnection.getInputStream(), charset));
+					conn.getInputStream(), charset));
 			String line;
 			while ((line = bfr.readLine()) != null) {
 				source += line.trim();
 			}
 			bfr.close();
+			closeConnection();
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -83,10 +129,13 @@ public class SourceCodeHelper {
 			} catch (Exception e) {
 			}
 		}
+		if (source.startsWith("null")) {
+			source = source.substring(4);
+		}
 		return source;
 	}
-	
-	private String getCharset(String source) {
+
+	private String filterCharset(String source) {
 		String charset = "utf-8";
 		if (source != null) {
 			String[] spstr = source.split("<");
@@ -107,14 +156,7 @@ public class SourceCodeHelper {
 		}
 		return charset;
 	}
-	
-	public static void main(String[] args) {
-		String url = "http://www.baidu.com";
-		try {
-			SourceCodeHelper sch = new SourceCodeHelper(url);
-			System.out.println(sch.getSourceCode());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+
+	public static void main(String[] args) throws IOException {
 	}
 }
