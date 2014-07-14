@@ -1,73 +1,36 @@
 package bugzillaSpider.helper;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import bugzillaSpider.constant.Const;
+
 public class ProxyHelper {
-
-	/**
-	 * 列表，用于存储获取代理的基地址
-	 */
+	private DatabaseHelper dbhelper = new DatabaseHelper();
 	private ArrayList<String> urlList = new ArrayList<String>();
-	/**
-	 * 队列，用于存储没有经过验证的HTTP代理
-	 */
-	private LinkedList<Proxy> uncheckProxyList = new LinkedList<Proxy>();
-	/**
-	 * 列表，用于存储已经经过验证的代理
-	 */
-	private LinkedList<Proxy> proxyList = new LinkedList<Proxy>();
-
-	/*
-	 * 验证代理线程
-	 */
-	private Thread vT = null;
-
-	/**
-	 * 自动更新线程
-	 */
-	private Thread iT = null;
-	/**
-	 * 单例
-	 */
-	private static ProxyHelper instance = null;
-
-	public static ProxyHelper getInstance() {
-		if (instance == null) {
-			instance = new ProxyHelper();
-		}
-		return instance;
-	}
 
 	public ProxyHelper() {
+		urlList.add("http://www.xici.net.co/nn/");
+		urlList.add("http://www.xici.net.co/nt/");
+		urlList.add("http://www.xici.net.co/wn/");
+		urlList.add("http://www.xici.net.co/wt/");
 	}
 
-	public void initProxyList() {
-		// iT = new Thread(new Runnable() {
-		// public void run() {
-		urlList.add("http://www.xici.net.co/nn/");
-//		urlList.add("http://www.xici.net.co/nt/");
-//		urlList.add("http://www.xici.net.co/wn/");
-//		urlList.add("http://www.xici.net.co/wt/");
+	public void addWebProxy() {
 		for (String baseUrl : urlList) {
-			for (int i = 1; i < 5; i++) {
+			for (int i = 1; i < 2; i++) {
 				try {
 					SourceCodeHelper sch = new SourceCodeHelper(baseUrl + i);
-					// System.out.println(baseUrl + i);
-					String source = sch.getSourceCode();
+					String source = sch.getSourceCode(sch.getCharset());
 					if (source == null) {
 						continue;
 					}
 					source = source.replace("</td>", ":");
 					source = source.replace("<td>", "");
-					// System.out.println(source);
 					Pattern ip_port_p = Pattern
 							.compile("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}:[0-9]{1,5}");
 					Matcher ip_port_m = ip_port_p.matcher(source);
@@ -78,10 +41,7 @@ public class ProxyHelper {
 						Proxy p = new Proxy(Proxy.Type.HTTP,
 								new InetSocketAddress(tmpAddress[0],
 										Integer.parseInt(tmpAddress[1])));
-						// 向未验证队列中加入代理
-						uncheckProxyList.offer(p);
-						System.out.println("Add: " + tmpAddress[0] + "\t"
-								+ tmpAddress[1]);
+						dbhelper.addProxy(p);
 					}
 					// 如果找不到，说明该基地址已经扫描结束
 					if (!ifFind) {
@@ -93,76 +53,83 @@ public class ProxyHelper {
 				}
 			}
 		}
-		// }
-		// });
-		// iT.start();
 	}
 
-	public void autoValidateProxy() {
-		while (proxyList.size() < 10) {
-			System.out.println("ProxyList:" + proxyList.size());
-			System.out.println("WaitList:" + uncheckProxyList.size());
-			Proxy p = uncheckProxyList.poll();
-			if (p != null) {
-				validateProxy(p);
-			}
+	public void updateProxy(Proxy p, long conn_time, long read_time) {
+		if (p != null) {
+			dbhelper.updateProxy(p, (int) conn_time, (int) read_time);
+		} else {
+			System.out.println("UPDATE PROXY NULL ERROR!");
 		}
-		vT = new Thread(new Runnable() {
-			public void run() {
-				while (true) {
-					if (!uncheckProxyList.isEmpty()) {
-						System.out.println("ProxyList:" + proxyList.size());
-						System.out.println("WaitList:"
-								+ uncheckProxyList.size());
-						Proxy p = uncheckProxyList.poll();
-						validateProxy(p);
-					} else {
-						System.out.println("WaitList is empty.");
-						try {
-							Thread.sleep(3000);
-						} catch (InterruptedException e) {
-						}
-					}
-				}
-			}
-		});
-		// vT.start();
 	}
 
-	private void validateProxy(Proxy p) {
-		try {
-			URL u = new URL("http://"
-					+ ((InetSocketAddress) p.address()).getHostString() + ":"
-					+ ((InetSocketAddress) p.address()).getPort());
-			HttpURLConnection conn = (HttpURLConnection) u.openConnection();
-			conn.connect();
-			proxyList.offer(p);
-		} catch (IOException e) {
-			e.printStackTrace();
+	public void validateProxy(int i) {
+		ArrayList<Proxy> okList = dbhelper.selectTopProxy(i);
+		if (okList == null) {
+			System.out.println("VALIDATE OKLIST NULL ERROR!");
+			return;
+		} else if (okList.size() >= i) {
+			System.out.println("ENOUGH PROXY!");
 			return;
 		}
-	}
-
-	public void debug() {
-		while (true) {
+		System.out.println("PROXY NUM = " + okList.size() + "");
+		ArrayList<Proxy> list = dbhelper.selectUnvalidateProxy();
+		if (list == null) {
+			System.out.println("VALIDATE LIST NULL ERROR!");
+			return;
+		}
+		if (list.size() < 5) {
+			addWebProxy();
+			list = dbhelper.selectUnvalidateProxy();
+			if (list == null) {
+				System.out.println("VALIDATE LIST NULL ERROR!");
+				return;
+			}
+		}
+		SourceCodeHelper sch = null;
+		try {
+			sch = new SourceCodeHelper(Const.ROOT_URL);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if (sch == null) {
+			return;
+		}
+		for (Proxy p : list) {
+			sch.setProxy(p);
+			InetSocketAddress add = (InetSocketAddress) p.address();
+			System.out.println("VALIDATE PROXY: " + add.getHostString() + ":"
+					+ add.getPort() + "");
 			try {
-				System.out.println("ProxyList:" + proxyList.size());
-				System.out.println("WaitList:" + uncheckProxyList.size());
-				Thread.sleep(3000);
-			} catch (InterruptedException e) {
+				sch.getSourceCode(Const.DEFAULT_CHARSET);
+				int conn_time = (int) sch.getConnTime();
+				int read_time = (int) sch.getReadTime();
+				dbhelper.updateProxy(p, conn_time, read_time);
+				i--;
+			} catch (Exception e) {
+				dbhelper.deleteProxy(p);
+				continue;
+			}
+			if (i == 0) {
+				break;
 			}
 		}
 	}
 
 	public Proxy getProxy() {
-		while (proxyList.size() < 10) {
-			try {
-				Thread.sleep(3000);
-			} catch (InterruptedException e) {
-			}
+		ArrayList<Proxy> list = dbhelper.selectTopProxy(10);
+		if (list == null) {
+			return null;
 		}
-		Proxy p = proxyList.poll();
-		uncheckProxyList.offer(p);
+		if (list.size() < 10) {
+			validateProxy(30);
+			list = dbhelper.selectTopProxy(10);
+		}
+		if (list == null) {
+			return null;
+		}
+		int i = (int) (Math.random() * list.size());
+		Proxy p = list.get(i);
 		return p;
 	}
 }

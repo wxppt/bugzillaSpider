@@ -7,7 +7,8 @@ public class Category implements Serializable {
 	private static String printFront = "";
 	private String showName = new String();
 	private String queryName = new String();
-	private ArrayList<Category> list = new ArrayList<Category>();
+	private ArrayList<Category> categorylist = new ArrayList<Category>();
+	private ArrayList<Bug> bugList = new ArrayList<Bug>();
 
 	public Category(String showName, String queryName) {
 		this.showName = showName;
@@ -30,19 +31,27 @@ public class Category implements Serializable {
 		this.queryName = queryName;
 	}
 
-	public ArrayList<Category> getList() {
-		return list;
+	public ArrayList<Category> getCateList() {
+		return categorylist;
 	}
 
-	public void setList(ArrayList<Category> list) {
-		this.list = list;
+	public void setCateList(ArrayList<Category> categorylist) {
+		this.categorylist = categorylist;
+	}
+
+	public ArrayList<Bug> getBugList() {
+		return bugList;
+	}
+
+	public void setBugList(ArrayList<Bug> bugList) {
+		this.bugList = bugList;
 	}
 
 	public void printCategory() {
 		System.out.println(printFront + showName + " - " + queryName);
-		if (!list.isEmpty()) {
+		if (!categorylist.isEmpty()) {
 			printFront += "¡¤";
-			for (Category cate : list) {
+			for (Category cate : categorylist) {
 				cate.printCategory();
 			}
 			printFront = printFront.substring(0, printFront.length() - 1);

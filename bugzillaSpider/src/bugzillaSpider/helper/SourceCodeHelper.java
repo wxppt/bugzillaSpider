@@ -1,20 +1,15 @@
 package bugzillaSpider.helper;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Date;
 
 import javax.net.ssl.HttpsURLConnection;
-
-import bugzillaSpider.PO.Category;
-import bugzillaSpider.constant.Const;
 
 public class SourceCodeHelper {
 
@@ -23,20 +18,21 @@ public class SourceCodeHelper {
 	private URL url = null;
 	private Proxy proxy = null;
 	private HttpURLConnection conn = null;
-
-	public SourceCodeHelper(String urlStr, Proxy proxy) throws IOException {
-		this.urlStr = urlStr;
-		url = new URL(urlStr);
-		this.proxy = proxy;
-	}
+	private long connTime = 0;
+	private long readTime = 0;
 
 	public SourceCodeHelper(String urlStr) throws IOException {
-		this.urlStr = urlStr;
-		url = new URL(urlStr);
+		this.urlStr = urlStr.replace(" ", "+");
+		url = new URL(urlStr.replace(" ", "+"));
+		System.out.println("TOUCH: " + url.toString());
 	}
 
 	public void setProxy(Proxy proxy) {
 		this.proxy = proxy;
+	}
+
+	public Proxy getProxy() {
+		return proxy;
 	}
 
 	private void openConnection() throws IOException {
@@ -53,12 +49,26 @@ public class SourceCodeHelper {
 				conn = (HttpURLConnection) url.openConnection(proxy);
 			}
 		}
+		conn.setConnectTimeout(10000);
+		conn.setReadTimeout(10000);
+		System.out.println("CONNECT: " + url.toString());
+		Date connStart = new Date();
+		conn.connect();
+		Date connEnd = new Date();
+		connTime = connEnd.getTime() - connStart.getTime();
+		System.out.println("CONNECT OK! TIME: " + connTime + "(ms)");
 	}
 
 	public boolean testConnection() {
 		if (conn != null) {
 			try {
+				System.out.println("CONNECT(TEST): " + url.toString());
+				Date connStart = new Date();
 				conn.connect();
+				Date connEnd = new Date();
+				connTime = connEnd.getTime() - connStart.getTime();
+				System.out.println("CONNECT(TEST) OK! TIME: " + connTime
+						+ "(ms)");
 				return true;
 			} catch (IOException e) {
 			}
@@ -77,8 +87,13 @@ public class SourceCodeHelper {
 		BufferedReader bfr = null;
 		try {
 			openConnection();
+			System.out.println("READ: " + url.toString());
+			Date readStart = new Date();
 			bfr = new BufferedReader(new InputStreamReader(
 					conn.getInputStream(), DEFAULT_CHARSET));
+			Date readEnd = new Date();
+			readTime = readEnd.getTime() - readStart.getTime();
+			System.out.println("READ OK! TIME: " + readTime + "(ms)");
 			String line;
 			while ((line = bfr.readLine()) != null) {
 				if (line.toLowerCase().contains("charset")) {
@@ -102,33 +117,24 @@ public class SourceCodeHelper {
 		return charset;
 	}
 
-	public String getSourceCode() {
-		return getSourceCode(getCharset());
-	}
-
-	public String getSourceCode(String charset) {
+	public String getSourceCode(String charset)
+			throws UnsupportedEncodingException, IOException {
 		BufferedReader bfr = null;
 		String source = null;
-		try {
-			openConnection();
-			bfr = new BufferedReader(new InputStreamReader(
-					conn.getInputStream(), charset));
-			String line;
-			while ((line = bfr.readLine()) != null) {
-				source += line.trim();
-			}
-			bfr.close();
-			closeConnection();
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			System.err.println("error_read");
-		} finally {
-			try {
-				bfr.close();
-			} catch (Exception e) {
-			}
+		openConnection();
+		System.out.println("READ: " + url.toString());
+		Date readStart = new Date();
+		bfr = new BufferedReader(new InputStreamReader(conn.getInputStream(),
+				charset));
+		Date readEnd = new Date();
+		readTime = readEnd.getTime() - readStart.getTime();
+		System.out.println("READ OK! TIME: " + readTime + "(ms)");
+		String line;
+		while ((line = bfr.readLine()) != null) {
+			source += line.trim();
 		}
+		bfr.close();
+		closeConnection();
 		if (source.startsWith("null")) {
 			source = source.substring(4);
 		}
@@ -157,6 +163,12 @@ public class SourceCodeHelper {
 		return charset;
 	}
 
-	public static void main(String[] args) throws IOException {
+	public long getConnTime() {
+		return connTime;
 	}
+
+	public long getReadTime() {
+		return readTime;
+	}
+
 }
