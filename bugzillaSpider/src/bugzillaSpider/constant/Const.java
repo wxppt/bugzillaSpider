@@ -6,13 +6,14 @@ public class Const {
 	private static String FULL_PRODUCT_LIST_URL = "https://bugzilla.mozilla.org/buglist.cgi?product=KEYWORDS&query_format=advanced&order=bug_status%2Cpriority%2Cassigned_to%2Cbug_id&limit=0";
 	private static String RAPID_PRODUCT_LIST_URL = "https://bugzilla.mozilla.org/buglist.cgi?product=KEYWORDS";
 	private static String BUG_XML_URL = "https://bugzilla.mozilla.org/show_bug.cgi?ctype=xml&id=KEYWORDS";
+	private static String BUG_HISTORY_URL = "https://bugzilla.mozilla.org/show_activity.cgi?id=KEYWORDS";
 
 	public static final String ROOT_URL = "https://bugzilla.mozilla.org";
 	public static final String PRODUCT_CATE_URL = "https://bugzilla.mozilla.org/page.cgi?id=productdashboard.html";
 
 	public static final String CATEGORY_SAVE_PATH = "d:/bugZilla/category.dat";
 	public static final String DEFAULT_CHARSET = "utf-8";
-	
+
 	public static final int MAX_TIME = 999999;
 
 	public static String fullSearchUrl(String keywords) {
@@ -29,6 +30,10 @@ public class Const {
 
 	public static String bugXmlUrl(String keywords) {
 		return BUG_XML_URL.replace("KEYWORDS", keywords);
+	}
+
+	public static String bugHistoryUrl(String keywords) {
+		return BUG_HISTORY_URL.replace("KEYWORDS", keywords);
 	}
 
 	public static String rapidProductUrl(String keywords) {

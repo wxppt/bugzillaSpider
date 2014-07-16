@@ -10,10 +10,19 @@ import java.util.regex.Pattern;
 import bugzillaSpider.constant.Const;
 
 public class ProxyHelper {
-	private DatabaseHelper dbhelper = new DatabaseHelper();
+	private MysqlHelper dbhelper = new MysqlHelper();
 	private ArrayList<String> urlList = new ArrayList<String>();
+	private static ProxyHelper instance = null;
+	private boolean enable = true;
 
-	public ProxyHelper() {
+	public static ProxyHelper getInstance() {
+		if (instance == null) {
+			instance = new ProxyHelper();
+		}
+		return instance;
+	}
+
+	private ProxyHelper() {
 		urlList.add("http://www.xici.net.co/nn/");
 		urlList.add("http://www.xici.net.co/nt/");
 		urlList.add("http://www.xici.net.co/wn/");
@@ -55,9 +64,9 @@ public class ProxyHelper {
 		}
 	}
 
-	public void updateProxy(Proxy p, long conn_time, long read_time) {
+	public void updateProxy(Proxy p, long read_time) {
 		if (p != null) {
-			dbhelper.updateProxy(p, (int) conn_time, (int) read_time);
+			dbhelper.updateProxy(p, (int) read_time);
 		} else {
 			System.out.println("UPDATE PROXY NULL ERROR!");
 		}
@@ -102,9 +111,8 @@ public class ProxyHelper {
 					+ add.getPort() + "");
 			try {
 				sch.getSourceCode(Const.DEFAULT_CHARSET);
-				int conn_time = (int) sch.getConnTime();
 				int read_time = (int) sch.getReadTime();
-				dbhelper.updateProxy(p, conn_time, read_time);
+				dbhelper.updateProxy(p, read_time);
 				i--;
 			} catch (Exception e) {
 				dbhelper.deleteProxy(p);
@@ -117,6 +125,9 @@ public class ProxyHelper {
 	}
 
 	public Proxy getProxy() {
+		if(!enable) {
+			return null;
+		}
 		ArrayList<Proxy> list = dbhelper.selectTopProxy(10);
 		if (list == null) {
 			return null;
@@ -131,5 +142,13 @@ public class ProxyHelper {
 		int i = (int) (Math.random() * list.size());
 		Proxy p = list.get(i);
 		return p;
+	}
+
+	public boolean isEnable() {
+		return enable;
+	}
+
+	public void setEnable(boolean enable) {
+		this.enable = enable;
 	}
 }

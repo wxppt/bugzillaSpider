@@ -13,12 +13,12 @@ import bugzillaSpider.helper.SourceCodeHelper;
 
 public class Launcher {
 	public static void main(String[] args) throws IOException {
-		ProxyHelper ph = new ProxyHelper();
+		ProxyHelper ph = ProxyHelper.getInstance();
 		ph.addWebProxy();
 		ph.validateProxy(30);
 		System.out.println("OK");
 		int trys = 3;
-		for (int i = 10742; i < 1000000; i++) {
+		for (int i = 13840; i < 1000000; i++) {
 			System.out.println(i);
 			String id = "" + i;
 			String urlStr = Const.bugXmlUrl(id);
@@ -37,12 +37,12 @@ public class Launcher {
 				} else {
 					System.out.println("Invalid Bug Id!");
 				}
-				ph.updateProxy(p, sch.getConnTime(), sch.getReadTime());
+				ph.updateProxy(p, sch.getReadTime());
 				trys = 3;
 			} catch (Exception e) {
 				if (trys-- > 0) {
 					i--;
-					ph.updateProxy(p, Const.MAX_TIME, Const.MAX_TIME);
+					ph.updateProxy(p, Const.MAX_TIME);
 					System.out.println("Try Again");
 					continue;
 				}

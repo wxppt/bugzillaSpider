@@ -6,5 +6,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/poi"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/selenium"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jdbc"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/mongo"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

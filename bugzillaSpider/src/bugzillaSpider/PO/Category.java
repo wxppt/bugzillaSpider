@@ -8,7 +8,7 @@ public class Category implements Serializable {
 	private String showName = new String();
 	private String queryName = new String();
 	private ArrayList<Category> categorylist = new ArrayList<Category>();
-	private ArrayList<Bug> bugList = new ArrayList<Bug>();
+	private ArrayList<String> bugList = new ArrayList<String>();
 
 	public Category(String showName, String queryName) {
 		this.showName = showName;
@@ -39,11 +39,11 @@ public class Category implements Serializable {
 		this.categorylist = categorylist;
 	}
 
-	public ArrayList<Bug> getBugList() {
+	public ArrayList<String> getBugList() {
 		return bugList;
 	}
 
-	public void setBugList(ArrayList<Bug> bugList) {
+	public void setBugList(ArrayList<String> bugList) {
 		this.bugList = bugList;
 	}
 

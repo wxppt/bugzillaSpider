@@ -18,7 +18,6 @@ public class SourceCodeHelper {
 	private URL url = null;
 	private Proxy proxy = null;
 	private HttpURLConnection conn = null;
-	private long connTime = 0;
 	private long readTime = 0;
 
 	public SourceCodeHelper(String urlStr) throws IOException {
@@ -51,29 +50,6 @@ public class SourceCodeHelper {
 		}
 		conn.setConnectTimeout(10000);
 		conn.setReadTimeout(10000);
-		System.out.println("CONNECT: " + url.toString());
-		Date connStart = new Date();
-		conn.connect();
-		Date connEnd = new Date();
-		connTime = connEnd.getTime() - connStart.getTime();
-		System.out.println("CONNECT OK! TIME: " + connTime + "(ms)");
-	}
-
-	public boolean testConnection() {
-		if (conn != null) {
-			try {
-				System.out.println("CONNECT(TEST): " + url.toString());
-				Date connStart = new Date();
-				conn.connect();
-				Date connEnd = new Date();
-				connTime = connEnd.getTime() - connStart.getTime();
-				System.out.println("CONNECT(TEST) OK! TIME: " + connTime
-						+ "(ms)");
-				return true;
-			} catch (IOException e) {
-			}
-		}
-		return false;
 	}
 
 	private void closeConnection() {
@@ -161,10 +137,6 @@ public class SourceCodeHelper {
 			}
 		}
 		return charset;
-	}
-
-	public long getConnTime() {
-		return connTime;
 	}
 
 	public long getReadTime() {

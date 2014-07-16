@@ -9,10 +9,10 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import bugzillaSpider.PO.Bug;
 import bugzillaSpider.PO.Category;
 import bugzillaSpider.constant.BugZilla;
 import bugzillaSpider.constant.Const;
+import bugzillaSpider.helper.ChromeHelper;
 import bugzillaSpider.helper.SourceCodeHelper;
 
 public class CategorySpider {
@@ -40,30 +40,29 @@ public class CategorySpider {
 					String queryName = optSec.split("\"")[1];
 					String showName = optSec.split(">")[1].split("<")[0];
 					Category newOptCate = new Category(showName, queryName);
+					System.out.println(queryName);
 					newOptCate.getBugList().addAll(getBugList(queryName));
 					newGroupCate.getCateList().add(newOptCate);
 				}
 				BugZilla.ROOT_CATE.getCateList().add(newGroupCate);
 			}
 		}
-		BugZilla.ROOT_CATE.printCategory();
+		// BugZilla.ROOT_CATE.printCategory();
 	}
 
-	public ArrayList<Bug> getBugList(String queryCatename) throws IOException {
-		ArrayList<Bug> list = new ArrayList<Bug>();
-		SourceCodeHelper sch = new SourceCodeHelper(
-				Const.rapidProductUrl(queryCatename));
-		String source = sch.getSourceCode("utf-8");
-		Pattern p = Pattern.compile(">[0-9]{3,10}<");
+	public ArrayList<String> getBugList(String queryCatename)
+			throws IOException {
+		ArrayList<String> list = new ArrayList<String>();
+		ChromeHelper ch = ChromeHelper.getInstance();
+		String source = ch.getSourceCode(Const.fullProductUrl(queryCatename));
+		Pattern p = Pattern.compile("> {0,3}[0-9]{3,10} {0,3}<");
 		Matcher m = p.matcher(source);
 		while (m.find()) {
-			String id = m.group().replaceAll(">|<", "");
-			Bug bug = new Bug();
-			bug.bid = id;
-			System.out.print(id + " ");
-			list.add(bug);
+			String id = m.group().replaceAll(">|<", "").trim();
+			System.out.println(queryCatename + " " + id);
+			list.add(id);
 		}
-		System.out.println(list.size());
+		System.out.println("Size: " + list.size());
 		return list;
 	}
 
