@@ -1,7 +1,5 @@
 package bugzillaSpider.spider;
 
-import java.io.IOException;
-import java.net.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -15,14 +13,13 @@ import org.jsoup.select.Elements;
 import bugzillaSpider.constant.Const;
 import bugzillaSpider.helper.LogHelper;
 import bugzillaSpider.helper.MongoHelper;
-import bugzillaSpider.helper.ProxyHelper;
 import bugzillaSpider.helper.SourceCodeHelper;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
 public class BugSpider {
-	private ProxyHelper ph = ProxyHelper.getInstance();
+	// private ProxyHelper ph = ProxyHelper.getInstance();
 	private MongoHelper mh = new MongoHelper();
 
 	public void readBug(int id) {
@@ -31,18 +28,24 @@ public class BugSpider {
 		String source = null;
 		if (!mh.existBug("" + id)) {
 			// 初始化代理
-			Proxy p = ph.getProxy();
+			// Proxy p = ph.getProxy();
 
 			int tryTimes = 3;
 			while (tryTimes > 0) {
 				try {
 					SourceCodeHelper sch = new SourceCodeHelper(urlStr);
-					sch.setProxy(p);
+					// sch.setProxy(p);
 					source = sch.getSourceCode(Const.DEFAULT_CHARSET);
-
-					if (source != null && !source.contains("InvalidBugId")) {
+					if (source != null
+							&& !source.contains("error=\"InvalidBugId\"")
+							&& !source.contains("error=\"NotPermitted\"")) {
 						source = source.replace("urlbase", " urlbase").replace(
 								"maintainer", " maintainer");
+
+						if (source.equals("toolong")) {
+							LogHelper.logToolong("" + id);
+							break;
+						}
 
 						System.out.print("FILTER SOURCECODE...");
 						DBObject bug = filterBugInfo(source);
@@ -75,8 +78,9 @@ public class BugSpider {
 						System.out.print("PASSING SOURCECODE...");
 						bug.put("url", urlStr);
 						mh.addBug(bug);
+						LogHelper.logThis(id + "");
 						System.out.println("OK");
-						ph.updateProxy(p, sch.getReadTime());
+						// ph.updateProxy(p, sch.getReadTime());
 					} else {
 						System.out.println("EMPTY READ!");
 						if (source == null) {
@@ -87,7 +91,7 @@ public class BugSpider {
 				} catch (Exception e) {
 					System.out.println("ERROR: " + e.getMessage());
 					System.out.println("TRY AGAIN: " + tryTimes);
-					ph.updateProxy(p, Const.MAX_TIME);
+					// ph.updateProxy(p, Const.MAX_TIME);
 					tryTimes--;
 					if (tryTimes == 0) {
 						LogHelper.logSkip(id);
@@ -117,7 +121,7 @@ public class BugSpider {
 			Elements eles = dom.getElementsByTag(tags[i]);
 			for (Element ele : eles) {
 				String text = ele.text();
-				System.out.println(tags[i] + ": " + text);
+				// System.out.println(tags[i] + ": " + text);
 				bug.put(tags[i], text);
 				break;
 			}
@@ -128,13 +132,13 @@ public class BugSpider {
 			for (Element ele : eles) {
 				String text = ele.text();
 				if (!list.contains(text)) {
-					System.out.println(listTags[i] + ": " + text);
+					// System.out.println(listTags[i] + ": " + text);
 					list.add(text);
 				}
 			}
 			bug.put(listTags[i], list);
 		}
-		System.out.println(bug);
+		// System.out.println(bug);
 		return bug;
 	}
 
@@ -143,13 +147,13 @@ public class BugSpider {
 		String urlStr = Const.bugHistoryUrl("" + id);
 		String source = null;
 		// 初始化代理
-		Proxy p = ph.getProxy();
+		// Proxy p = ph.getProxy();
 
 		int tryTimes = 3;
 		while (tryTimes > 0) {
 			try {
 				SourceCodeHelper sch = new SourceCodeHelper(urlStr);
-				sch.setProxy(p);
+				// sch.setProxy(p);
 				source = sch.getSourceCode(Const.DEFAULT_CHARSET);
 
 				if (source != null && !source.contains("InvalidBugId")) {
@@ -171,7 +175,7 @@ public class BugSpider {
 			} catch (Exception e) {
 				System.out.println("ERROR: " + e.getMessage());
 				System.out.println("TRY AGAIN: " + tryTimes);
-				ph.updateProxy(p, Const.MAX_TIME);
+				// ph.updateProxy(p, Const.MAX_TIME);
 				tryTimes--;
 				continue;
 			}
@@ -182,7 +186,7 @@ public class BugSpider {
 	public List<DBObject> filterHistory(String xmlSource) {
 		List<DBObject> list = new ArrayList<DBObject>();
 		Document dom = Jsoup.parse(xmlSource);
-		System.out.println(xmlSource);
+		// System.out.println(xmlSource);
 		Elements eles = dom.getElementsByTag("tbody");
 		for (Element ele : eles) {
 			String text = ele.text();
@@ -216,7 +220,7 @@ public class BugSpider {
 				}
 			}
 		}
-		System.out.println(list);
+		// System.out.println(list);
 		return list;
 	}
 
@@ -253,11 +257,7 @@ public class BugSpider {
 			}
 			list.add(commobj);
 		}
-		System.out.println(list);
+		// System.out.println(list);
 		return list;
-	}
-
-	public static void main(String[] args) throws IOException {
-		new BugSpider().readBug(633702);
 	}
 }

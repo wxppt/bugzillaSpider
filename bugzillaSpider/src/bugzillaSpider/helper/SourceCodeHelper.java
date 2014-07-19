@@ -106,7 +106,13 @@ public class SourceCodeHelper {
 		readTime = readEnd.getTime() - readStart.getTime();
 		System.out.println("READ OK! TIME: " + readTime + "(ms)");
 		String line;
+		Date lineStart = new Date();
 		while ((line = bfr.readLine()) != null) {
+			Date lineCur = new Date();
+			if(lineCur.getTime()-lineStart.getTime() > 10000) {
+				bfr.close();
+				return "toolong";
+			}
 			source += line.trim();
 		}
 		bfr.close();
