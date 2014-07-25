@@ -52,7 +52,6 @@ public class ProxyHelper {
 										Integer.parseInt(tmpAddress[1])));
 						dbhelper.addProxy(p);
 					}
-					// 如果找不到，说明该基地址已经扫描结束
 					if (!ifFind) {
 						break;
 					}

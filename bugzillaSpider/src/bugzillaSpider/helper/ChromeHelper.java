@@ -8,7 +8,6 @@ public class ChromeHelper {
 	private WebDriver webDriver = null;
 
 	private ChromeHelper() {
-		// ³õÊ¼»¯ä¯ÀÀÆ÷Ä£ÄâÆ÷
 		System.getProperties().setProperty("webdriver.chrome.driver",
 				"d:/chromedriver.exe");
 		webDriver = new ChromeDriver();

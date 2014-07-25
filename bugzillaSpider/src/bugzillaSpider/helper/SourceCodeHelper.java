@@ -109,7 +109,7 @@ public class SourceCodeHelper {
 		Date lineStart = new Date();
 		while ((line = bfr.readLine()) != null) {
 			Date lineCur = new Date();
-			if(lineCur.getTime()-lineStart.getTime() > 10000) {
+			if (lineCur.getTime() - lineStart.getTime() > 10000) {
 				bfr.close();
 				return "toolong";
 			}

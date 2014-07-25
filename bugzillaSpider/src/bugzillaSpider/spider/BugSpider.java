@@ -22,7 +22,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
 public class BugSpider {
-	// private ProxyHelper ph = ProxyHelper.getInstance();
 	private MongoHelper mh = new MongoHelper();
 
 	public void readBug(int id) {
@@ -43,7 +42,6 @@ public class BugSpider {
 					Elements skip2 = dom.getElementsByAttributeValue("error",
 							"NotPermitted");
 
-					// sch.setProxy(p);
 					if (skip1.isEmpty() && skip2.isEmpty()) {
 
 						System.out.print("FILTER SOURCECODE...");
@@ -141,8 +139,6 @@ public class BugSpider {
 		System.out.println("====READING HISTORY: " + id + "====");
 		String urlStr = Const.bugHistoryUrl("" + id);
 		String source = null;
-		// 初始化代理
-		// Proxy p = ph.getProxy();
 
 		int tryTimes = 3;
 		while (tryTimes > 0) {
@@ -210,7 +206,7 @@ public class BugSpider {
 						dbobj.put("detail", subList);
 						list.add(dbobj);
 					} else {
-						System.out.println("一看就是程序写错了");
+						System.out.println("Internal Error!");
 					}
 				}
 			}
@@ -251,7 +247,6 @@ public class BugSpider {
 			}
 			list.add(commobj);
 		}
-		// System.out.println(list);
 		return list;
 	}
 }
