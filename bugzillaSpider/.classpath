@@ -7,5 +7,8 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/selenium"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jdbc"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/mongo"/>
+	<classpathentry kind="lib" path="C:/Softwares/IDE/eclipse/external jars/mongo-2.10.1.jar"/>
+	<classpathentry kind="lib" path="C:/Softwares/IDE/eclipse/external jars/selenium-2.42.2/selenium-java-2.42.2.jar"/>
+	<classpathentry kind="lib" path="C:/Softwares/IDE/eclipse/external jars/jsoup-1.7.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

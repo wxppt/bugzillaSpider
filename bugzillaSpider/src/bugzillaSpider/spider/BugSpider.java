@@ -1,9 +1,12 @@
 package bugzillaSpider.spider;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -25,30 +28,26 @@ public class BugSpider {
 	public void readBug(int id) {
 		System.out.println("====READING BUG: " + id + "====");
 		String urlStr = Const.bugXmlUrl("" + id);
-		String source = null;
 		if (!mh.existBug("" + id)) {
-			// 初始化代理
-			// Proxy p = ph.getProxy();
 
 			int tryTimes = 3;
 			while (tryTimes > 0) {
 				try {
-					SourceCodeHelper sch = new SourceCodeHelper(urlStr);
-					// sch.setProxy(p);
-					source = sch.getSourceCode(Const.DEFAULT_CHARSET);
-					if (source != null
-							&& !source.contains("error=\"InvalidBugId\"")
-							&& !source.contains("error=\"NotPermitted\"")) {
-						source = source.replace("urlbase", " urlbase").replace(
-								"maintainer", " maintainer");
+					URL u = new URL(urlStr);
+					HttpsURLConnection conn = (HttpsURLConnection) u
+							.openConnection();
+					Document dom = Jsoup.parse(conn.getInputStream(), "utf-8",
+							urlStr);
+					Elements skip1 = dom.getElementsByAttributeValue("error",
+							"InvalidBugId");
+					Elements skip2 = dom.getElementsByAttributeValue("error",
+							"NotPermitted");
 
-						if (source.equals("toolong")) {
-							LogHelper.logToolong("" + id);
-							break;
-						}
+					// sch.setProxy(p);
+					if (skip1.isEmpty() && skip2.isEmpty()) {
 
 						System.out.print("FILTER SOURCECODE...");
-						DBObject bug = filterBugInfo(source);
+						DBObject bug = filterBugInfo(dom);
 						System.out.println("OK");
 
 						System.out.print("GETTING HISTORY...");
@@ -61,7 +60,7 @@ public class BugSpider {
 						System.out.println("OK");
 
 						System.out.print("FILTER COMMENT...");
-						ArrayList<DBObject> commentList = filterComment(source);
+						ArrayList<DBObject> commentList = filterComment(dom);
 						System.out.println("OK");
 						System.out.print("PASSING COMMENT...");
 						for (DBObject comm : commentList) {
@@ -82,10 +81,7 @@ public class BugSpider {
 						System.out.println("OK");
 						// ph.updateProxy(p, sch.getReadTime());
 					} else {
-						System.out.println("EMPTY READ!");
-						if (source == null) {
-							LogHelper.logEmptyRead(id);
-						}
+						System.out.println("EMPTY BUG!");
 					}
 					tryTimes = 0;
 				} catch (Exception e) {
@@ -104,9 +100,8 @@ public class BugSpider {
 		}
 	}
 
-	public DBObject filterBugInfo(String xmlSource) {
+	public DBObject filterBugInfo(Document dom) {
 		DBObject bug = new BasicDBObject();
-		Document dom = Jsoup.parse(xmlSource);
 
 		String[] tags = { "bug_id", "creation_ts", "short_desc", "delta_ts",
 				"reporter_accessible", "cclist_accessible",
@@ -224,9 +219,8 @@ public class BugSpider {
 		return list;
 	}
 
-	public ArrayList<DBObject> filterComment(String xmlSource) {
+	public ArrayList<DBObject> filterComment(Document dom) {
 		ArrayList<DBObject> list = new ArrayList<DBObject>();
-		Document dom = Jsoup.parse(xmlSource);
 		Elements commeles = dom.getElementsByTag("long_desc");
 		for (Element commele : commeles) {
 			DBObject commobj = new BasicDBObject();
