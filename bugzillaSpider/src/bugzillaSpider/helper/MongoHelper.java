@@ -2,6 +2,8 @@ package bugzillaSpider.helper;
 
 import java.net.UnknownHostException;
 
+import bugzillaSpider.constant.Const;
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
@@ -44,7 +46,7 @@ public class MongoHelper {
 		DB db = mongo.getDB("bugzilla");
 		DBCollection collection = db.getCollection("bug");
 		DBObject obj = new BasicDBObject();
-		obj.put("bug_id", bugid);
+		obj.put("url", Const.bugXmlUrl(bugid));
 		DBCursor cur = collection.find(obj);
 		if (cur.hasNext()) {
 			return true;
