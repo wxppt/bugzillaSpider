@@ -12,7 +12,6 @@ import java.util.regex.Pattern;
 import bugzillaSpider.PO.Category;
 import bugzillaSpider.constant.BugZilla;
 import bugzillaSpider.constant.Const;
-import bugzillaSpider.helper.ChromeHelper;
 import bugzillaSpider.helper.SourceCodeHelper;
 
 public class CategorySpider {
@@ -53,8 +52,9 @@ public class CategorySpider {
 	public ArrayList<String> getBugList(String queryCatename)
 			throws IOException {
 		ArrayList<String> list = new ArrayList<String>();
-		ChromeHelper ch = ChromeHelper.getInstance();
-		String source = ch.getSourceCode(Const.fullProductUrl(queryCatename));
+		SourceCodeHelper sch = new SourceCodeHelper(
+				Const.fullProductUrl(queryCatename));
+		String source = sch.getSourceCode("utf-8");
 		Pattern p = Pattern.compile("> {0,3}[0-9]{3,10} {0,3}<");
 		Matcher m = p.matcher(source);
 		while (m.find()) {

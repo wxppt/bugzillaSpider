@@ -77,7 +77,6 @@ public class BugSpider {
 						mh.addBug(bug);
 						LogHelper.logThis(id + "");
 						System.out.println("OK");
-						// ph.updateProxy(p, sch.getReadTime());
 					} else {
 						System.out.println("EMPTY BUG!");
 					}
@@ -85,7 +84,6 @@ public class BugSpider {
 				} catch (Exception e) {
 					System.out.println("ERROR: " + e.getMessage());
 					System.out.println("TRY AGAIN: " + tryTimes);
-					// ph.updateProxy(p, Const.MAX_TIME);
 					tryTimes--;
 					if (tryTimes == 0) {
 						LogHelper.logSkip(id);
@@ -95,6 +93,7 @@ public class BugSpider {
 			}
 		} else {
 			System.out.println("BUG ALREADY EXISTED: " + id);
+			LogHelper.logThis(id + "");
 		}
 	}
 
@@ -144,7 +143,6 @@ public class BugSpider {
 		while (tryTimes > 0) {
 			try {
 				SourceCodeHelper sch = new SourceCodeHelper(urlStr);
-				// sch.setProxy(p);
 				source = sch.getSourceCode(Const.DEFAULT_CHARSET);
 
 				if (source != null && !source.contains("InvalidBugId")) {
@@ -166,7 +164,6 @@ public class BugSpider {
 			} catch (Exception e) {
 				System.out.println("ERROR: " + e.getMessage());
 				System.out.println("TRY AGAIN: " + tryTimes);
-				// ph.updateProxy(p, Const.MAX_TIME);
 				tryTimes--;
 				continue;
 			}

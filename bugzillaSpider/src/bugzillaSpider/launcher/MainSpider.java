@@ -23,10 +23,11 @@ public class MainSpider {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		if (start < 10000) {
-			start = 10000;
+		if (start < 9000) {
+			start = 9000;
 		}
-		for (int i = start; i <= 1039500; i++) {
+		//503473
+		for (int i = start; i <= 2000000; i++) {
 			bs.readBug(i);
 		}
 		System.out.println("DOWNLOAD OK!!!");
